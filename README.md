@@ -1,8 +1,8 @@
 # Go API Manager (GAM)
 
-> A cloud-native, microservices-based API Manager — built from scratch in Go to learn Go, distributed systems, and SRE practices deeply, and to serve as a flagship portfolio project.
+> A lightweight, self-hosted API gateway and management platform, built in Go as a set of independent microservices — routing, authentication, rate limiting, analytics, and API publishing for your backend services.
 
-**Status:** 📐 Design phase (Phase 1 of 17 — see [roadmap.md](roadmap.md)). No code yet; this README documents where the project is headed and will be updated as each phase lands.
+**Status:** Architecture finalized (see [roadmap.md](roadmap.md) for the build plan). Implementation is underway, service by service; this README reflects the target design and will be updated as each service lands.
 
 ---
 
@@ -36,21 +36,20 @@ If you've ever used **Kong**, **Tyk**, **Apigee**, or **WSO2 API Manager** — t
 - **Visibility** — analytics on who's calling what, how often, and how it's performing.
 - **A publishing workflow** — a way for API owners to register/version/document an API, and for developers to discover and subscribe to it (a "developer portal").
 
-This project builds a scoped-down but architecturally real version of that system, as a set of independent Go microservices.
+GAM builds a scoped-down but architecturally real version of that system, as a set of independent Go microservices you run yourself.
 
-## Why this project
+## Why GAM
 
-Built as a **learning vehicle and portfolio centerpiece** for both **Software Engineer** and **Site Reliability Engineer** interviews:
+- **Own your API infrastructure** — no vendor lock-in and no black-box SaaS gateway. Every component is a plain Go service you can read, run, and modify.
+- **Real service boundaries** — REST at the edge for consumers, gRPC internally between services, and async messaging (NATS) for anything that shouldn't block the request path.
+- **Operability built in, not bolted on** — structured logging, Prometheus metrics, distributed tracing, and resilience patterns (timeouts, retries, circuit breakers) are part of the core design.
+- **Small footprint** — a handful of Go binaries plus Docker Compose. No Kubernetes cluster required to run it.
 
-- **SE angle:** a real distributed system (not a CRUD app) — service boundaries, inter-service protocols (REST + gRPC), async messaging, data modeling, testing.
-- **SRE angle:** observability (metrics/logs/traces), resilience patterns (timeouts/retries/circuit breakers), containerized deployment, CI/CD.
-- **Go, from zero:** every phase of the build doubles as a Go tutorial (see `docs/`), so the finished repo also demonstrates the *learning process*, not just the output.
-
-See [roadmap.md](roadmap.md) for the full 3-week, phase-by-phase build plan, including the reasoning behind every major technology choice.
+See [roadmap.md](roadmap.md) for the full build plan and the reasoning behind every major technology choice.
 
 ## Feature scope
 
-Core scope (what actually gets built in the 3-week plan):
+Core scope:
 
 - ✅ API Gateway — dynamic reverse proxy/routing to registered upstream services
 - ✅ Authentication — API keys + JWT, OAuth2 client-credentials flow (hand-rolled)
@@ -256,7 +255,7 @@ flowchart TB
 
 | Concern | Choice | Notes |
 |---|---|---|
-| Language | Go (1.22+) | Learned from zero as part of this project — see `docs/phase-02`/`phase-03`. |
+| Language | Go (1.22+) | Standard toolchain, no framework magic. |
 | HTTP routing | `net/http` + [`chi`](https://github.com/go-chi/chi) | Thin router, no hidden magic. |
 | Internal RPC | gRPC + Protocol Buffers | Gateway ↔ Auth, Gateway ↔ Rate Limiter. |
 | Database | PostgreSQL via `sqlx` | Raw SQL, no ORM. |
@@ -268,19 +267,18 @@ flowchart TB
 | Tracing | OpenTelemetry + Jaeger | Cross-service trace propagation over HTTP & gRPC. |
 | Containers | Docker (multi-stage builds) + Docker Compose | Kubernetes is a stretch goal, not core scope. |
 | CI | GitHub Actions | Lint (`golangci-lint`), test, build. |
-| Dev Portal | Static HTML/JS | Deliberately minimal — this is a backend/SRE-focused project. |
+| Dev Portal | Static HTML/JS | Deliberately minimal — this is a backend-focused project. |
 
 ## Repository structure
 
 ```
 go-api-manager/
 ├── README.md                 # you are here
-├── roadmap.md                # the 3-week phase-by-phase build plan
+├── roadmap.md                # phase-by-phase build plan
 ├── go.work                   # ties all service modules together for local dev
-├── docs/                     # one doc per phase: theory + full code + explanation
-│   ├── phase-02-go-fundamentals-part1.md
-│   ├── phase-03-go-fundamentals-part2.md
-│   ├── phase-04-auth-service.md
+├── docs/                     # architecture decisions and design notes, one per subsystem
+│   ├── adr-001-service-boundaries.md
+│   ├── adr-002-auth-service.md
 │   └── ...
 ├── services/
 │   ├── gateway/               # data plane: reverse proxy, routing
@@ -296,23 +294,23 @@ go-api-manager/
 └── scripts/                   # DB migrations, seed data, load test scripts
 ```
 
-*(This structure will be created incrementally, service by service, starting in Week 1 — it doesn't exist yet.)*
+*(This structure is created incrementally, service by service, per the roadmap — it doesn't exist yet.)*
 
 ## Getting started
 
-Nothing runs yet — this section will be filled in starting Phase 4 (first runnable service) and finalized once `docker compose up` brings up the whole system in Phase 9. Check back after Week 2.
+Not yet runnable. Services are being implemented one at a time per the [roadmap](roadmap.md); once the first services land, this section will cover setup and running the stack with `docker compose up`.
 
 ## Documentation index
 
-Populated as each phase completes. See [roadmap.md](roadmap.md) for the full phase list and what each one covers.
+Populated as each service lands. See [roadmap.md](roadmap.md) for the full build plan and what each stage covers.
 
 ## Roadmap
 
-The full week-by-week, phase-by-phase plan — including every architecture trade-off and why it was made — lives in **[roadmap.md](roadmap.md)**.
+The full build plan — including every architecture trade-off and why it was made — lives in **[roadmap.md](roadmap.md)**.
 
 ## Stretch goals
 
-Only attempted if time remains after the core 3-week plan (see [roadmap.md](roadmap.md#stretch-goals-only-if-time-remains--do-not-let-these-threaten-week-3)):
+Only attempted once the core scope above is complete (see [roadmap.md](roadmap.md#stretch-goals-only-if-time-remains--do-not-let-these-threaten-week-3)):
 
 - Kubernetes deployment (kind/minikube + Helm + HPA)
 - Full OAuth2 Authorization Code flow with a real login page
